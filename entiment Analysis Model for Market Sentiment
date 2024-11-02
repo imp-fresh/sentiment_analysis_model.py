@@ -1,0 +1,35 @@
+import tweepy
+import pandas as pd
+from transformers import pipeline
+
+# Configura las credenciales de la API de Twitter
+API_KEY = 'tu_api_key'
+API_SECRET = 'tu_api_secret'
+ACCESS_TOKEN = 'tu_access_token'
+ACCESS_SECRET = 'tu_access_secret'
+
+# Autenticación en Twitter
+auth = tweepy.OAuthHandler(API_KEY, API_SECRET)
+auth.set_access_token(ACCESS_TOKEN, ACCESS_SECRET)
+api = tweepy.API(auth)
+
+# Función para obtener tweets
+def get_tweets(query, count=100):
+    tweets = api.search(q=query, lang="es", count=count)
+    return [{'tweet': tweet.text, 'created_at': tweet.created_at} for tweet in tweets]
+
+# Obtener tweets sobre un tema específico
+query = 'Solana'
+tweets_data = get_tweets(query)
+
+# Convertir a DataFrame
+tweets_df = pd.DataFrame(tweets_data)
+
+# Inicializar el modelo de análisis de sentimientos
+sentiment_pipeline = pipeline("sentiment-analysis", model="nlptown/bert-base-multilingual-uncased-sentiment")
+
+# Análisis de sentimientos
+tweets_df['sentiment'] = tweets_df['tweet'].apply(lambda x: sentiment_pipeline(x)[0]['label'])
+
+# Mostrar resultados
+print(tweets_df[['tweet', 'sentiment']])
